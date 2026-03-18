@@ -23,9 +23,6 @@
         import { createRoot } from 'react-dom/client';
         import { Printer, Eye, EyeOff, Filter, ChevronLeft, ChevronRight, Church, Users, Calendar as CalendarIcon } from 'lucide-react';
 
-
-
-
 // --- Configuración y Colores ---
 const COLORS = {
     azulInst: '#1F4E79',     // Azul Colegio
@@ -62,28 +59,23 @@ const generateMonthTemplate = (daysInMonth, startDay, specialEvents = {}, includ
 
 const calendarData = {
     "Marzo 2026": {
-     { day: 16, title: "Ballan" },
-  { day: 17, title: "Bonifacio" },
-  { day: 18, title: "Attwell" },
-  { day: 19, title: "Bastón" },
-  { day: 20, title: "Barrios" },
-
-  { 
-    day: 23, 
-    title: "🇦🇷 Feriado (Día Nacional de la Memoria)",
-    type: "feriado"
-  },
-  { 
-    day: 24, 
-    title: "🇦🇷 Feriado (Día Nacional de la Memoria)",
-    type: "feriado"
-  },
-
-  { day: 25, title: "Basta" },
-  { day: 26, title: "Cernadas" },
-  { day: 27, title: "Cerezo" },
-  { day: 30, title: "Carrizo" },
-  { day: 31, title: "Buzzo" }
+        daysInMonth: 31,
+        startDay: 0, // 1 de Marzo 2026 es Domingo
+        mision: "Caminamos juntos en la memoria y la esperanza.",
+        events: generateMonthTemplate(31, 0, {
+            16: { profe: 'Ballan', tema: 'Propuesta del día...' },
+            17: { profe: 'Bonifacio', tema: 'Propuesta del día...' },
+            18: { profe: 'Attwell', tema: 'Propuesta del día...' },
+            19: { profe: 'Bastón', tema: 'Propuesta del día...' },
+            20: { profe: 'Barrios', tema: 'Propuesta del día...' },
+            23: { type: 'feriado', event: '🇦🇷 Feriado (Día Nacional de la Memoria)' },
+            24: { type: 'feriado', event: '🇦🇷 Feriado (Día Nacional de la Memoria)' },
+            25: { profe: 'Basta', tema: 'Propuesta del día...' },
+            26: { profe: 'Cernadas', tema: 'Propuesta del día...' },
+            27: { profe: 'Cerezo', tema: 'Propuesta del día...' },
+            30: { profe: 'Carrizo', tema: 'Propuesta del día...' },
+            31: { profe: 'Buzzo', tema: 'Propuesta del día...' }
+        })
     },
     "Abril 2026": {
         daysInMonth: 30,
@@ -237,7 +229,7 @@ const calendarData = {
         events: generateMonthTemplate(31, 2, {
             8: { type: 'feriado', event: 'Inmaculada Concepción' },
             25: { type: 'feriado', event: 'Navidad' }
-        }, false) // El cuarto argumento en false quita los placeholders
+        }, false) 
     }
 };
 
