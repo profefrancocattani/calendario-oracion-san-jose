@@ -21,424 +21,471 @@
     <script type="text/babel" data-type="module">
         import React, { useState, useMemo } from 'react';
         import { createRoot } from 'react-dom/client';
-        import { Printer, Eye, EyeOff, Filter, ChevronLeft, ChevronRight, Church, Users, Calendar as CalendarIcon } from 'lucide-react';
+        import { Printer, Eye, EyeOff, Filter, ChevronLeft, ChevronRight, Church, Users, Calendar as CalendarIcon, X, BookOpen, Heart } from 'lucide-react';
 
-// --- Configuración y Colores ---
-const COLORS = {
-    azulInst: '#1F4E79',     // Azul Colegio
-    rojoLadrillo: '#C0504D', // Rojo Institucional
-    dorado: '#D4AF37',       // Toque litúrgico
-    blanco: '#FFFFFF',
-    negro: '#2D3436',
-    grisClaro: '#F8F9FA',
-    amarillo: '#FFF9C4',     // Tema/Oración
-    celesteFondo: '#E3F2FD', // Convivencia/Alegre
-    rosaFondo: '#FCE4EC',    // Feriados/Liturgia
-    verdeProfe: '#2D6A4F',
-    celesteProfe: '#0077B6',
-    azulReceso: '#E1F5FE'
-};
+        // Icono personalizado de manos en oración (SVG)
+        const PrayingHandsIcon = ({ size = 24, className = "" }) => (
+          <svg 
+            width={size} 
+            height={size} 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            className={className}
+          >
+            <path d="M18 8c0-2.2-1.8-4-4-4s-4 1.8-4 4v10l-4-4" />
+            <path d="M6 8c0-2.2 1.8-4 4-4s4 1.8 4 4v10l4-4" />
+            <path d="M10 22h4" />
+          </svg>
+        );
 
-const DAYS_OF_WEEK = ['DOMINGO', 'LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO'];
+        // --- Configuración y Colores ---
+        const COLORS = {
+            azulInst: '#1F4E79',     // Azul Colegio
+            rojoLadrillo: '#C0504D', // Rojo Institucional
+            dorado: '#D4AF37',       // Toque litúrgico
+            blanco: '#FFFFFF',
+            negro: '#2D3436',
+            grisClaro: '#F8F9FA',
+            amarillo: '#FFF9C4',     // Tema/Oración
+            celesteFondo: '#E3F2FD', // Convivencia/Alegre
+            rosaFondo: '#FCE4EC',    // Feriados/Liturgia
+            verdeProfe: '#2D6A4F',
+            celesteProfe: '#0077B6',
+            azulReceso: '#E1F5FE'
+        };
 
-// --- Generadores de Datos ---
-const generateMonthTemplate = (daysInMonth, startDay, specialEvents = {}, includePlaceholders = true) => {
-    const events = {};
-    for (let i = 1; i <= daysInMonth; i++) {
-        const dayOfWeek = (startDay + i - 1) % 7;
-        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+        const DAYS_OF_WEEK = ['DOMINGO', 'LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO'];
+        const LEMA_COMUN = "“Vivir, Contemplar y Anunciar al mundo el Amor de Dios”";
 
-        if (specialEvents[i]) {
-            events[i] = specialEvents[i];
-        } else if (!isWeekend && includePlaceholders) {
-            events[i] = { profe: 'Responsable', tema: 'Propuesta del día...' };
-        }
-    }
-    return events;
-};
+        // --- Generadores de Datos ---
+        const generateMonthTemplate = (daysInMonth, startDay, specialEvents = {}, includePlaceholders = true) => {
+            const events = {};
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dayOfWeek = (startDay + i - 1) % 7;
+                const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
-const calendarData = {
-    "Marzo 2026": {
-        daysInMonth: 31,
-        startDay: 0, // 1 de Marzo 2026 es Domingo
-        mision: "Caminamos juntos en la memoria y la esperanza.",
-        events: generateMonthTemplate(31, 0, {
-            16: { profe: 'Ballan', tema: 'Propuesta del día...' },
-            17: { profe: 'Bonifacio', tema: 'Propuesta del día...' },
-            18: { profe: 'Attwell', tema: 'Propuesta del día...' },
-            19: { profe: 'Bastón', tema: 'Propuesta del día...' },
-            20: { profe: 'Barrios', tema: 'Propuesta del día...' },
-            23: { type: 'feriado', event: '🇦🇷 Feriado (Día Nacional de la Memoria)' },
-            24: { type: 'feriado', event: '🇦🇷 Feriado (Día Nacional de la Memoria)' },
-            25: { profe: 'Basta', tema: 'Propuesta del día...' },
-            26: { profe: 'Cernadas', tema: 'Propuesta del día...' },
-            27: { profe: 'Cerezo', tema: 'Propuesta del día...' },
-            30: { profe: 'Carrizo', tema: 'Propuesta del día...' },
-            31: { profe: 'Buzzo', tema: 'Propuesta del día...' }
-        })
-    },
-    "Abril 2026": {
-        daysInMonth: 30,
-        startDay: 3,
-        mision: "Vivir la alegría de la Resurrección.",
-        events: generateMonthTemplate(30, 3, {
-            1: { profe: 'de Latorre', tema: 'Propuesta del día...' },
-            2: { type: 'feriado', event: 'Día del Veterano y de los Caídos de la Guerra de Malvinas / Jueves Santo' },
-            3: { type: 'feriado', event: 'Viernes Santo', pastoral: 'Pasión del Señor' },
-            5: { pastoral: 'Pascua de Resurrección' },
-            6: { profe: 'Duran', tema: 'Propuesta del día...' },
-            7: { profe: 'Gallo', tema: 'Propuesta del día...' },
-            8: { profe: 'Iriarte', tema: 'Propuesta del día...' },
-            9: { profe: 'Coronel', tema: 'Propuesta del día...' },
-            10: { profe: 'Elizari', tema: 'Propuesta del día...' },
-            13: { profe: 'Godoy', tema: 'Propuesta del día...' },
-            14: { profe: 'Millauro', tema: 'Propuesta del día...' },
-            15: { profe: 'Pereyra', tema: 'Propuesta del día...' },
-            16: { profe: 'Parma', tema: 'Propuesta del día...' },
-            17: { profe: 'Pita', tema: 'Propuesta del día...' },
-            20: { profe: 'Ragaini', tema: 'Propuesta del día...' },
-            21: { profe: 'Suetti', tema: 'Propuesta del día...' },
-            22: { profe: 'Ponce Lopez', tema: 'Propuesta del día...' },
-            23: { profe: 'Rodriguez', tema: 'Propuesta del día...' },
-            24: { profe: 'Ruiz', tema: 'Propuesta del día...' },
-            27: { profe: 'Torretta', tema: 'Propuesta del día...' },
-            28: { profe: 'Weiman', tema: 'Propuesta del día...' },
-            29: { profe: 'San Juan', tema: 'Propuesta del día...' },
-            30: { profe: 'Sanchez', tema: 'Propuesta del día...' }
-        })
-    },
-    "Mayo 2026": {
-        daysInMonth: 31,
-        startDay: 5,
-        mision: "Con María, servimos con alegría.",
-        events: generateMonthTemplate(31, 5, {
-            1: { type: 'feriado', event: 'Día del Trabajador' },
-            4: { profe: 'Ballan', tema: 'Propuesta del día...' },
-            5: { profe: 'Barrios', tema: 'Propuesta del día...' },
-            6: { profe: 'Silva', tema: 'Propuesta del día...' },
-            7: { profe: 'Cerezo', tema: 'Propuesta del día...' },
-            8: { profe: 'Taddei', tema: 'Propuesta del día...' },
-            11: { profe: 'Calandria', tema: 'Propuesta del día...' },
-            12: { profe: 'Basta', tema: 'Propuesta del día...' },
-            13: { profe: 'Attwell', tema: 'Propuesta del día...' },
-            14: { profe: 'Cernadas', tema: 'Propuesta del día...' },
-            15: { profe: 'de Latorre', tema: 'Propuesta del día...' },
-            18: { profe: 'Duran', tema: 'Propuesta del día...' },
-            19: { profe: 'Bonifacio', tema: 'Propuesta del día...' },
-            20: { profe: 'Buzzo', tema: 'Propuesta del día...' },
-            21: { profe: 'Coronel', tema: 'Propuesta del día...' },
-            22: { profe: 'Elizari', tema: 'Propuesta del día...' },
-            25: { type: 'feriado', event: 'Revolución de Mayo' },
-            26: { profe: 'Gallo', tema: 'Propuesta del día...' },
-            27: { profe: 'Bastón', tema: 'Propuesta del día...' },
-            28: { profe: 'Millauro', tema: 'Propuesta del día...' },
-            29: { profe: 'Godoy', tema: 'Propuesta del día...' }
-        })
-    },
-    "Junio 2026": {
-        daysInMonth: 30,
-        startDay: 1,
-        mision: "Comprometidos con nuestra bandera y nuestra fe.",
-        events: generateMonthTemplate(30, 1, {
-            1: { profe: 'Carrizo', tema: 'Propuesta del día...' },
-            2: { profe: 'Parma', tema: 'Propuesta del día...' },
-            3: { profe: 'Iriarte', tema: 'Propuesta del día...' },
-            4: { profe: 'Ragaini', tema: 'Propuesta del día...' },
-            5: { profe: 'Pita', tema: 'Propuesta del día...' },
-            8: { profe: 'Pereyra', tema: 'Propuesta del día...' },
-            9: { profe: 'Suetti', tema: 'Propuesta del día...' },
-            10: { profe: 'Ponce Lopez', tema: 'Propuesta del día...' },
-            11: { profe: 'Rodriguez', tema: 'Propuesta del día...' },
-            12: { profe: 'Ruiz', tema: 'Propuesta del día...' },
-            15: { type: 'feriado', event: 'Paso a la Inmortalidad de Güemes' },
-            16: { profe: 'Weiman', tema: 'Propuesta del día...' },
-            17: { profe: 'San Juan', tema: 'Propuesta del día...' },
-            18: { profe: 'Sanchez', tema: 'Propuesta del día...' },
-            19: { profe: 'Torretta', tema: 'Propuesta del día...' },
-            20: { type: 'feriado', event: 'Día de la Bandera' },
-            22: { profe: 'Ballan', tema: 'Propuesta del día...' },
-            23: { profe: 'Bonifacio', tema: 'Propuesta del día...' },
-            24: { profe: 'Attwell', tema: 'Propuesta del día...' },
-            25: { profe: 'Coronel', tema: 'Propuesta del día...' },
-            26: { profe: 'Barrios', tema: 'Propuesta del día...' },
-            29: { profe: 'Calandria', tema: 'Propuesta del día...' },
-            30: { profe: 'Basta', tema: 'Propuesta del día...' }
-        })
-    },
-    "Julio 2026": {
-        daysInMonth: 31,
-        startDay: 3,
-        mision: "Descansar para renovar el espíritu.",
-        events: {
-            ...generateMonthTemplate(31, 3, {
-                1: { profe: 'Buzzo', tema: 'Propuesta del día...' },
-                2: { profe: 'Cerezo', tema: 'Propuesta del día...' },
-                3: { profe: 'Cernadas', tema: 'Propuesta del día...' },
-                6: { profe: 'de Latorre', tema: 'Propuesta del día...' },
-                7: { profe: 'Duran', tema: 'Propuesta del día...' },
-                8: { profe: 'Bastón', tema: 'Propuesta del día...' },
-                9: { type: 'feriado', event: 'Día de la Independencia' },
-                10: { type: 'feriado', event: 'Feriado Puente' },
-                13: { profe: 'Gallo', tema: 'Propuesta del día...' },
-                14: { profe: 'Millauro', tema: 'Propuesta del día...' },
-                15: { profe: 'Iriarte', tema: 'Propuesta del día...' },
-                16: { profe: 'Parma', tema: 'Propuesta del día...' },
-                17: { profe: 'Elizari', tema: 'Propuesta del día...' },
-            }),
-            ...Object.fromEntries(Array.from({ length: 12 }, (_, i) => [i + 20, { type: 'receso', event: 'Receso Invernal' }]))
-        }
-    },
-    "Agosto 2026": {
-        daysInMonth: 31,
-        startDay: 6,
-        mision: "Ejemplo de entrega y coraje.",
-        events: generateMonthTemplate(31, 6, {
-            17: { type: 'feriado', event: 'Paso a la Inmortalidad de San Martín' }
-        })
-    },
-    "Septiembre 2026": {
-        daysInMonth: 30,
-        startDay: 2,
-        mision: "Aprender y enseñar con amor.",
-        events: generateMonthTemplate(30, 2, {
-            11: { type: 'feriado', event: 'Día del Maestro' },
-            21: { type: 'feriado', event: 'Día del Estudiante / Primavera' }
-        })
-    },
-    "Octubre 2026": {
-        daysInMonth: 31,
-        startDay: 4,
-        mision: "Encuentro y respeto por lo diverso.",
-        events: generateMonthTemplate(31, 4, {
-            12: { type: 'feriado', event: 'Día del Respeto a la Diversidad Cultural' }
-        })
-    },
-    "Noviembre 2026": {
-        daysInMonth: 30,
-        startDay: 0,
-        mision: "Cuidar nuestra casa común y nuestra soberanía.",
-        events: generateMonthTemplate(30, 0, {
-            20: { type: 'feriado', event: 'Día de la Soberanía Nacional' },
-            23: { type: 'feriado', event: 'Feriado Turístico' }
-        })
-    },
-    "Diciembre 2026": {
-        daysInMonth: 31,
-        startDay: 2,
-        mision: "Esperanza que nace en el pesebre.",
-        events: generateMonthTemplate(31, 2, {
-            8: { type: 'feriado', event: 'Inmaculada Concepción' },
-            25: { type: 'feriado', event: 'Navidad' }
-        }, false) 
-    }
-};
+                if (specialEvents[i]) {
+                    events[i] = specialEvents[i];
+                } else if (!isWeekend && includePlaceholders) {
+                    events[i] = { profe: 'Responsable', tema: 'Propuesta del día...' };
+                }
+            }
+            return events;
+        };
 
-function App() {
-    const [currentMonth, setCurrentMonth] = useState('Marzo 2026');
-    const [filter, setFilter] = useState('all');
-    const [isTemplateMode, setIsTemplateMode] = useState(false);
+        // --- Datos del Calendario (Fusionados) ---
+        const calendarData = {
+            "Marzo 2026": {
+                daysInMonth: 31,
+                startDay: 0,
+                mision: LEMA_COMUN,
+                events: generateMonthTemplate(31, 0, {
+                    10: {
+                        profe: 'Responsable',
+                        pastoral: 'Caminar livianos',
+                        tema: `“Echen todas sus preocupaciones sobre él, porque Dios cuida de ustedes” (1 Pedro 5:7).\n\nTe invito a vivir este día tomando lo que te hace bien y soltando lo que ya no necesitás. El camino de Cuaresma nos pide caminar más livianos.\n\nPregunta/Acción: ¿Qué actitud o enojo podrías soltar hoy para sentirte más liviano?`
+                    },
+                    11: {
+                        profe: 'Responsable',
+                        pastoral: 'Permanecer en su Amor',
+                        tema: `“Permanezcan en mi amor. El que permanece en mí da fruto abundante” (Juan 15, 9-10).\n\nAmar nos vuelve fecundos. Prepararnos para vivir la entrega de Jesús es elegir permanecer en su amor, no sólo con palabras, sino con gestos concretos.\n\nPregunta/Acción: ¿Qué gestos de amor nos podemos regalar hoy como curso?`
+                    },
+                    12: {
+                        profe: 'Responsable',
+                        pastoral: 'Confiar como José',
+                        tema: `“José, hijo de David, no temas recibir a María, porque lo que ha sido engendrado en ella es del Espíritu Santo” (Mt 1, 20).\n\nA veces sentimos que tenemos todo controlado y de golpe algo nos cambia todo. José confió cuando sus planes se dieron vuelta por completo, dándonos el ejemplo de que confiar en Dios es la respuesta cuando no entendemos algo.\n\nPregunta/Acción: ¿Qué situaciones nos generan ansiedad hoy? Entreguémosle a Dios con confianza nuestras preocupaciones diarias.`
+                    },
+                    13: {
+                        profe: 'Responsable',
+                        pastoral: 'Buscar en el lugar correcto',
+                        tema: `“Al despertar, José hizo lo que el Ángel del Señor le había mandado y tomó consigo a María” (Mateo 1, 24).\n\nJosé elige el silencio para escuchar lo que realmente importa. Que en esta Cuaresma no tengamos miedo de buscar en nuestro propio corazón.\n\nPregunta/Acción: Pensemos en una persona de nuestro entorno que nos dé calma y claridad cuando estamos confundidos. ¿Cómo podemos tomar esos buenos consejos hoy?`
+                    },
+                    16: { 
+                        profe: 'Ballan', 
+                        pastoral: 'Jesús y el hijo del funcionario',
+                        tema: `“Jesús volvió a Galilea. Cuando llegó, un funcionario real fue a su encuentro y le suplicó que bajara a curar a su hijo, que estaba muy enfermo. Jesús le dijo: ‘Puedes volver tranquilo, tu hijo vive’. El hombre creyó en la palabra de Jesús y se puso en camino.”​ (Juan 4, 46‑50)\n\nEn este pasaje aparece un padre desesperado, que hace lo único que puede hacer: ir a buscar ayuda para su hijo y aferrarse a una palabra que le devuelva la esperanza. Jesús no le da una prueba ni un milagro “a la vista”; le regala solo una frase: “Tu hijo vive”. Lo impresionante es que este hombre se fía de esa palabra y se pone en camino, apoyado únicamente en la confianza.\n\nDios Padre bueno, al comenzar este día queremos ponernos en tu presencia y abrirte el corazón. Te pedimos que, como a ese padre del Evangelio, nos regales la gracia de confiar en la palabra de tu Hijo. Te lo pedimos por Jesucristo nuestro Señor. Amén.` 
+                    },
+                    17: { 
+                        profe: 'Bonifacio', 
+                        pastoral: 'Levantate y caminá',
+                        tema: `“Había un hombre que hacía treinta y ocho años que estaba enfermo. Jesús le dijo: ‘Levántate, agarra tu camilla y camina’. Y al instante aquel hombre quedó sano, tomó su camilla y se puso a caminar.”​ (Juan 5, 5‑9)\n\nEn este pasaje del Evangelio aparece un hombre que se acostumbró a vivir paralizado y repitiendo siempre la misma frase: “no tengo a nadie”. Jesús se acerca justo ahí, donde hay desánimo y soledad, y no se queda en la queja; le propone algo nuevo: levantarse, cargar con su camilla y empezar de nuevo. \n\nSeñor Jesús, al iniciar este día nos presentamos ante vos con lo que somos y lo que traemos en el corazón. Te pedimos que en este día nos hables al corazón y nos digas también a nosotros: “Levantate y caminá”, para que no nos quedemos quietos frente a las dificultades. Que tu Espíritu nos enseñe a estudiar con responsabilidad, a respetarnos, a pedir ayuda a tiempo y a ser, en nuestra escuela, signo de tu amor para los demás. Te lo pedimos a vos, que vivís y reinás por los siglos de los siglos. Amén.` 
+                    },
+                    18: { 
+                        profe: 'Attwell', 
+                        pastoral: 'Unidos al Padre',
+                        tema: `“Yo les aseguro: El Hijo no puede hacer nada por su cuenta y sólo hace lo que le ve hacer al Padre; lo que hace el Padre también lo hace el Hijo. El Padre ama al Hijo y le manifiesta todo lo que hace; le manifestará obras todavía mayores que éstas, para asombro de ustedes. Así como el Padre resucita a los muertos y les da la vida, así también el Hijo da la vida a quien él quiere dársela”. (Juan 5, 19‑21)\n\nEl Evangelio nos muestra a Jesús totalmente unido al Padre, viviendo una confianza tan profunda que no hace nada “por su cuenta”, sino en sintonía con su amor y su modo de mirar la vida. También nosotros estamos invitados a aprender a vivir así: no desde “me las arreglo solo”, sino desde la confianza en un Dios que nos ama, nos guía y nos muestra un camino. ​\n\nSeñor Jesús, que al empezar este día podamos recibir estas palabras como una promesa. Te pedimos que nos des esa vida que sólo vos podés dar y que, como escuela, seamos un lugar donde se nota que el Padre y el Hijo siguen actuando hoy en medio de nosotros.` 
+                    },
+                    19: { type: 'feriado', event: '⛪ Fiesta Patronal San José', pastoral: 'Solemnidad de San José' },
+                    20: { 
+                        profe: 'Barrios', 
+                        pastoral: 'Cuidar como José',
+                        tema: `Padre bueno, venimos de celebrar a San José y todavía tenemos presentes en el corazón las palabras, los gestos y los encuentros que vivimos juntos como comunidad en este tiempo de preparación a nuestras fiestas patronales. Gracias por el ejemplo sencillo y firme de San José y por mostrarnos en él a un hombre que supo escuchar tus sueños y confiar en tu plan. \n\nHoy, al día siguiente de su fiesta, queremos dejar este día en tus manos y te pedimos que, como a José, nos enseñes a trabajar en silencio, a cuidar a los demás y a construir con paciencia, día a día, el futuro que soñás para nosotros. Que lo vivido en estas fiestas patronales no se quede solo en un lindo recuerdo, sino que nos empuje a vivir este año con más confianza, más servicio y más fe. Amén.` 
+                    },
+                    23: { type: 'feriado', event: '🇦🇷 Feriado (Día Nacional de la Memoria)' },
+                    24: { type: 'feriado', event: '🇦🇷 Feriado (Día Nacional de la Memoria)' },
+                    25: { profe: 'Basta', tema: 'Propuesta del día...' },
+                    26: { profe: 'Cernadas', tema: 'Propuesta del día...' },
+                    27: { profe: 'Cerezo', tema: 'Propuesta del día...' },
+                    30: { profe: 'Carrizo', tema: 'Propuesta del día...' },
+                    31: { profe: 'Buzzo', tema: 'Propuesta del día...' }
+                })
+            },
+            "Abril 2026": { 
+                daysInMonth: 30, 
+                startDay: 3, 
+                mision: LEMA_COMUN, 
+                events: generateMonthTemplate(30, 3, { 
+                    1: { profe: 'de Latorre', tema: 'Propuesta del día...' },
+                    2: { type: 'feriado', event: 'Día del Veterano de Malvinas / Jueves Santo' },
+                    3: { type: 'feriado', event: 'Viernes Santo', pastoral: 'Pasión del Señor' },
+                    5: { pastoral: 'Pascua de Resurrección' },
+                    6: { profe: 'Duran', tema: 'Propuesta del día...' },
+                    7: { profe: 'Gallo', tema: 'Propuesta del día...' },
+                    8: { profe: 'Iriarte', tema: 'Propuesta del día...' },
+                    9: { profe: 'Coronel', tema: 'Propuesta del día...' },
+                    10: { profe: 'Elizari', tema: 'Propuesta del día...' },
+                    13: { profe: 'Godoy', tema: 'Propuesta del día...' },
+                    14: { profe: 'Millauro', tema: 'Propuesta del día...' },
+                    15: { profe: 'Pereyra', tema: 'Propuesta del día...' },
+                    16: { profe: 'Parma', tema: 'Propuesta del día...' },
+                    17: { profe: 'Pita', tema: 'Propuesta del día...' },
+                    20: { profe: 'Ragaini', tema: 'Propuesta del día...' },
+                    21: { profe: 'Suetti', tema: 'Propuesta del día...' },
+                    22: { profe: 'Ponce Lopez', tema: 'Propuesta del día...' },
+                    23: { profe: 'Rodriguez', tema: 'Propuesta del día...' },
+                    24: { profe: 'Ruiz', tema: 'Propuesta del día...' },
+                    27: { profe: 'Torretta', tema: 'Propuesta del día...' },
+                    28: { profe: 'Weiman', tema: 'Propuesta del día...' },
+                    29: { profe: 'San Juan', tema: 'Propuesta del día...' },
+                    30: { profe: 'Sanchez', tema: 'Propuesta del día...' }
+                }) 
+            },
+            "Mayo 2026": {
+                daysInMonth: 31,
+                startDay: 5,
+                mision: "Con María, servimos con alegría.",
+                events: generateMonthTemplate(31, 5, {
+                    1: { type: 'feriado', event: 'Día del Trabajador' },
+                    4: { profe: 'Ballan', tema: 'Propuesta del día...' },
+                    5: { profe: 'Barrios', tema: 'Propuesta del día...' },
+                    6: { profe: 'Silva', tema: 'Propuesta del día...' },
+                    7: { profe: 'Cerezo', tema: 'Propuesta del día...' },
+                    8: { profe: 'Taddei', tema: 'Propuesta del día...' },
+                    11: { profe: 'Calandria', tema: 'Propuesta del día...' },
+                    12: { profe: 'Basta', tema: 'Propuesta del día...' },
+                    13: { profe: 'Attwell', tema: 'Propuesta del día...' },
+                    14: { profe: 'Cernadas', tema: 'Propuesta del día...' },
+                    15: { profe: 'de Latorre', tema: 'Propuesta del día...' },
+                    18: { profe: 'Duran', tema: 'Propuesta del día...' },
+                    19: { profe: 'Bonifacio', tema: 'Propuesta del día...' },
+                    20: { profe: 'Buzzo', tema: 'Propuesta del día...' },
+                    21: { profe: 'Coronel', tema: 'Propuesta del día...' },
+                    22: { profe: 'Elizari', tema: 'Propuesta del día...' },
+                    25: { type: 'feriado', event: 'Revolución de Mayo' },
+                    26: { profe: 'Gallo', tema: 'Propuesta del día...' },
+                    27: { profe: 'Bastón', tema: 'Propuesta del día...' },
+                    28: { profe: 'Millauro', tema: 'Propuesta del día...' },
+                    29: { profe: 'Godoy', tema: 'Propuesta del día...' }
+                })
+            },
+            "Junio 2026": {
+                daysInMonth: 30,
+                startDay: 1,
+                mision: "Comprometidos con nuestra bandera y nuestra fe.",
+                events: generateMonthTemplate(30, 1, {
+                    1: { profe: 'Carrizo', tema: 'Propuesta del día...' },
+                    2: { profe: 'Parma', tema: 'Propuesta del día...' },
+                    3: { profe: 'Iriarte', tema: 'Propuesta del día...' },
+                    4: { profe: 'Ragaini', tema: 'Propuesta del día...' },
+                    5: { profe: 'Pita', tema: 'Propuesta del día...' },
+                    8: { profe: 'Pereyra', tema: 'Propuesta del día...' },
+                    9: { profe: 'Suetti', tema: 'Propuesta del día...' },
+                    10: { profe: 'Ponce Lopez', tema: 'Propuesta del día...' },
+                    11: { profe: 'Rodriguez', tema: 'Propuesta del día...' },
+                    12: { profe: 'Ruiz', tema: 'Propuesta del día...' },
+                    15: { type: 'feriado', event: 'Paso a la Inmortalidad de Güemes' },
+                    16: { profe: 'Weiman', tema: 'Propuesta del día...' },
+                    17: { profe: 'San Juan', tema: 'Propuesta del día...' },
+                    18: { profe: 'Sanchez', tema: 'Propuesta del día...' },
+                    19: { profe: 'Torretta', tema: 'Propuesta del día...' },
+                    20: { type: 'feriado', event: 'Día de la Bandera' },
+                    22: { profe: 'Ballan', tema: 'Propuesta del día...' },
+                    23: { profe: 'Bonifacio', tema: 'Propuesta del día...' },
+                    24: { profe: 'Attwell', tema: 'Propuesta del día...' },
+                    25: { profe: 'Coronel', tema: 'Propuesta del día...' },
+                    26: { profe: 'Barrios', tema: 'Propuesta del día...' },
+                    29: { profe: 'Calandria', tema: 'Propuesta del día...' },
+                    30: { profe: 'Basta', tema: 'Propuesta del día...' }
+                })
+            },
+            "Julio 2026": {
+                daysInMonth: 31,
+                startDay: 3,
+                mision: "Descansar para renovar el espíritu.",
+                events: {
+                    ...generateMonthTemplate(31, 3, {
+                        1: { profe: 'Buzzo', tema: 'Propuesta del día...' },
+                        2: { profe: 'Cerezo', tema: 'Propuesta del día...' },
+                        3: { profe: 'Cernadas', tema: 'Propuesta del día...' },
+                        6: { profe: 'de Latorre', tema: 'Propuesta del día...' },
+                        7: { profe: 'Duran', tema: 'Propuesta del día...' },
+                        8: { profe: 'Bastón', tema: 'Propuesta del día...' },
+                        9: { type: 'feriado', event: 'Día de la Independencia' },
+                        10: { type: 'feriado', event: 'Feriado Puente' },
+                        13: { profe: 'Gallo', tema: 'Propuesta del día...' },
+                        14: { profe: 'Millauro', tema: 'Propuesta del día...' },
+                        15: { profe: 'Iriarte', tema: 'Propuesta del día...' },
+                        16: { profe: 'Parma', tema: 'Propuesta del día...' },
+                        17: { profe: 'Elizari', tema: 'Propuesta del día...' },
+                    }),
+                    ...Object.fromEntries(Array.from({ length: 12 }, (_, i) => [i + 20, { type: 'receso', event: 'Receso Invernal' }]))
+                }
+            },
+            "Agosto 2026": {
+                daysInMonth: 31,
+                startDay: 6,
+                mision: "Ejemplo de entrega y coraje.",
+                events: generateMonthTemplate(31, 6, {
+                    17: { type: 'feriado', event: 'Paso a la Inmortalidad de San Martín' }
+                })
+            },
+            "Septiembre 2026": {
+                daysInMonth: 30,
+                startDay: 2,
+                mision: "Aprender y enseñar con amor.",
+                events: generateMonthTemplate(30, 2, {
+                    11: { type: 'feriado', event: 'Día del Maestro' },
+                    21: { type: 'feriado', event: 'Día del Estudiante / Primavera' }
+                })
+            },
+            "Octubre 2026": {
+                daysInMonth: 31,
+                startDay: 4,
+                mision: "Encuentro y respeto por lo diverso.",
+                events: generateMonthTemplate(31, 4, {
+                    12: { type: 'feriado', event: 'Día del Respeto a la Diversidad Cultural' }
+                })
+            },
+            "Noviembre 2026": {
+                daysInMonth: 30,
+                startDay: 0,
+                mision: "Cuidar nuestra casa común y nuestra soberanía.",
+                events: generateMonthTemplate(30, 0, {
+                    20: { type: 'feriado', event: 'Día de la Soberanía Nacional' },
+                    23: { type: 'feriado', event: 'Feriado Turístico' }
+                })
+            },
+            "Diciembre 2026": {
+                daysInMonth: 31,
+                startDay: 2,
+                mision: "Esperanza que nace en el pesebre.",
+                events: generateMonthTemplate(31, 2, {
+                    8: { type: 'feriado', event: 'Inmaculada Concepción' },
+                    25: { type: 'feriado', event: 'Navidad' }
+                }, false) 
+            }
+        };
 
-    const months = Object.keys(calendarData);
-    const activeData = calendarData[currentMonth];
+        function App() {
+            const [currentMonth, setCurrentMonth] = useState('Marzo 2026');
+            const [filter, setFilter] = useState('all');
+            const [isTemplateMode, setIsTemplateMode] = useState(false);
+            const [selectedProposal, setSelectedProposal] = useState(null);
 
-    const handleExportPDF = () => {
-        window.print();
-    };
+            const months = Object.keys(calendarData);
+            const activeData = calendarData[currentMonth] || calendarData["Marzo 2026"];
 
-    const getEventStyle = (data) => {
-        if (!data) return {};
-        if (data.type === 'feriado') return { backgroundColor: COLORS.rosaFondo, borderLeft: `4px solid ${COLORS.rojoLadrillo}` };
-        if (data.type === 'receso') return { backgroundColor: COLORS.azulReceso, borderLeft: `4px solid ${COLORS.celesteProfe}` };
-        if (data.pastoral) return { backgroundColor: COLORS.celesteFondo, borderLeft: `4px solid ${COLORS.azulInst}` };
-        return { backgroundColor: COLORS.blanco };
-    };
+            const getEventStyle = (data) => {
+                if (!data) return {};
+                if (data.type === 'feriado') return { backgroundColor: COLORS.rosaFondo, borderLeft: `4px solid ${COLORS.rojoLadrillo}` };
+                if (data.type === 'receso') return { backgroundColor: COLORS.azulReceso, borderLeft: `4px solid ${COLORS.celesteProfe}` };
+                if (data.pastoral) return { backgroundColor: COLORS.celesteFondo, borderLeft: `4px solid ${COLORS.azulInst}` };
+                return { backgroundColor: COLORS.blanco };
+            };
 
-    return (
-        <div className="min-h-screen bg-slate-50 p-4 md:p-8 print:p-0 print:bg-white">
-            <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&display=swap');
-        @media print {
-          .no-print { display: none !important; }
-          body { -webkit-print-color-adjust: exact !important; }
-          @page { size: landscape; margin: 0.5cm; }
-          .calendar-container { border: none !important; box-shadow: none !important; }
-        }
-      `}</style>
+            return (
+                <div className="min-h-screen bg-slate-50 p-4 md:p-8 print:p-0 print:bg-white">
+                    <style>{`
+                        @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&display=swap');
+                        @media print {
+                            .no-print { display: none !important; }
+                            body { -webkit-print-color-adjust: exact !important; }
+                            @page { size: landscape; margin: 0.5cm; }
+                            .calendar-container { border: none !important; box-shadow: none !important; width: 100% !important; max-width: none !important; }
+                        }
+                    `}</style>
 
-            {/* --- Header de Control (No Print) --- */}
-            <div className="max-w-7xl mx-auto mb-6 no-print">
-                <div className="bg-white rounded-xl shadow-md border border-slate-200 p-4 flex flex-col lg:flex-row gap-4 items-center justify-between">
-                    <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 w-full lg:w-auto">
-                        {months.map(m => (
-                            <button
-                                key={m}
-                                onClick={() => setCurrentMonth(m)}
-                                className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all ${currentMonth === m
-                                        ? 'bg-blue-900 text-white shadow-lg scale-105'
-                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                    }`}
-                            >
-                                {m.split(' ')[0]}
-                            </button>
-                        ))}
-                    </div>
-
-                    <div className="flex flex-wrap gap-3 items-center">
-                        <div className="flex items-center gap-2 bg-slate-100 px-3 py-2 rounded-lg border border-slate-200">
-                            <Filter size={16} className="text-slate-500" />
-                            <select
-                                value={filter}
-                                onChange={(e) => setFilter(e.target.value)}
-                                className="bg-transparent text-sm font-medium outline-none cursor-pointer"
-                            >
-                                <option value="all">Todos los días</option>
-                                <option value="equipo">Solo Equipo Pastoral</option>
-                                <option value="pastoral">Hitos Pastorales</option>
-                            </select>
-                        </div>
-
-                        <button
-                            onClick={() => setIsTemplateMode(!isTemplateMode)}
-                            className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-slate-800 rounded-lg font-bold text-sm hover:bg-slate-50 transition-colors"
-                        >
-                            {isTemplateMode ? <Eye size={18} /> : <EyeOff size={18} />}
-                            {isTemplateMode ? 'Ver Datos' : 'Modo Plantilla'}
-                        </button>
-
-                        <button
-                            onClick={handleExportPDF}
-                            className="flex items-center gap-2 px-6 py-2 bg-amber-400 text-slate-900 rounded-lg font-bold text-sm hover:bg-amber-500 shadow-sm transition-all"
-                        >
-                            <Printer size={18} />
-                            Imprimir / PDF
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            {/* --- Calendario Principal --- */}
-            <div className="max-w-7xl mx-auto bg-white border-2 border-slate-900 shadow-2xl calendar-container overflow-hidden rounded-sm">
-
-                {/* Encabezado Institucional */}
-                <div className="flex items-center justify-between p-6 border-b-2 border-slate-900 bg-white">
-                    <div className="w-1/4 flex flex-col items-center">
-                        <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center border-2 border-slate-200">
-                            <Church size={40} className="text-blue-900" />
-                        </div>
-                        <span className="text-[10px] font-bold mt-1 text-slate-400">ESC. SECUNDARIA</span>
-                    </div>
-
-                    <div className="w-2/4 text-center">
-                        <h1 className="font-bold text-4xl uppercase tracking-tighter leading-none" style={{ color: COLORS.azulInst, fontFamily: "'Oswald', sans-serif" }}>
-                            Calendario de Oración
-                        </h1>
-                        <p className="text-xl font-medium mt-1 text-slate-600 uppercase tracking-widest">
-                            {currentMonth}
-                        </p>
-                        {activeData.mision && (
-                            <div className="mt-2 inline-block px-4 py-1 bg-amber-50 border border-amber-200 rounded text-xs italic text-amber-800">
-                                " {activeData.mision} "
+                    {/* --- Controles --- */}
+                    <div className="max-w-7xl mx-auto mb-6 no-print">
+                        <div className="bg-white rounded-xl shadow-md border border-slate-200 p-4 flex flex-col lg:flex-row gap-4 items-center justify-between">
+                            <div className="flex items-center gap-2 overflow-x-auto pb-2 w-full lg:w-auto">
+                                {months.map(m => (
+                                    <button 
+                                        key={m} 
+                                        onClick={() => setCurrentMonth(m)} 
+                                        className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all ${currentMonth === m ? 'bg-blue-900 text-white shadow-lg scale-105' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                                    >
+                                        {m.split(' ')[0]}
+                                    </button>
+                                ))}
                             </div>
-                        )}
+
+                            <div className="flex flex-wrap gap-3 items-center">
+                                <div className="flex items-center gap-2 bg-slate-100 px-3 py-2 rounded-lg border border-slate-200">
+                                    <Filter size={16} className="text-slate-500" />
+                                    <select value={filter} onChange={(e) => setFilter(e.target.value)} className="bg-transparent text-sm font-medium outline-none cursor-pointer">
+                                        <option value="all">Todos los días</option>
+                                        <option value="pastoral">Actividades Pastoral</option>
+                                    </select>
+                                </div>
+                                <button onClick={() => setIsTemplateMode(!isTemplateMode)} className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-slate-800 rounded-lg font-bold text-sm hover:bg-slate-50">
+                                    {isTemplateMode ? <Eye size={18} /> : <EyeOff size={18} />}
+                                    {isTemplateMode ? 'Ver Datos' : 'Modo Plantilla'}
+                                </button>
+                                <button onClick={() => window.print()} className="flex items-center gap-2 px-6 py-2 bg-amber-400 text-slate-900 rounded-lg font-bold text-sm hover:bg-amber-500 shadow-sm">
+                                    <Printer size={18} />
+                                    Imprimir / PDF
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="w-1/4 text-right flex flex-col justify-center" style={{ color: COLORS.azulInst }}>
-                        <div className="font-bold text-2xl uppercase leading-none" style={{ fontFamily: "'Oswald', sans-serif" }}>
-                            San José
+                    {/* --- Calendario --- */}
+                    <div className="max-w-7xl mx-auto bg-white border-2 border-slate-900 shadow-2xl calendar-container overflow-hidden rounded-sm">
+                        <div className="flex items-center justify-between p-6 border-b-2 border-slate-900 bg-white">
+                            <div className="w-1/4 flex flex-col items-center">
+                                <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center border-2 border-slate-200">
+                                    <Church size={40} className="text-blue-900" />
+                                </div>
+                                <span className="text-[10px] font-bold mt-1 text-slate-400 uppercase tracking-widest">Esc. Secundaria</span>
+                            </div>
+                            <div className="w-2/4 text-center">
+                                <h1 className="font-bold text-4xl uppercase tracking-tighter" style={{ color: COLORS.azulInst, fontFamily: "'Oswald', sans-serif" }}>Calendario de Oración</h1>
+                                <p className="text-xl font-medium mt-1 text-slate-600 uppercase tracking-widest">{currentMonth}</p>
+                                <div className="mt-2 inline-block px-4 py-1 bg-amber-50 border border-amber-200 rounded text-xs italic text-amber-800">{activeData.mision}</div>
+                            </div>
+                            <div className="w-1/4 text-right" style={{ color: COLORS.azulInst }}>
+                                <div className="font-bold text-2xl uppercase" style={{ fontFamily: "'Oswald', sans-serif" }}>San José</div>
+                                <div className="text-xs font-bold tracking-tighter uppercase opacity-70">De Libertad</div>
+                            </div>
                         </div>
-                        <div className="text-xs font-bold tracking-tighter">DE LIBERTAD</div>
-                        <div className="text-[9px] mt-2 leading-tight uppercase opacity-70">
-                            Obispado de Merlo-Moreno<br />Escuelas Parroquiales
+
+                        <div className="grid grid-cols-7 border-b-2 border-slate-900 bg-[#C0504D]">
+                            {DAYS_OF_WEEK.map(day => (
+                                <div key={day} className="py-2 text-center text-[10px] font-bold text-white tracking-widest border-r border-slate-900/30 last:border-r-0 uppercase">{day}</div>
+                            ))}
+                        </div>
+
+                        <div className="grid grid-cols-7" style={{ gridAutoRows: 'minmax(140px, auto)' }}>
+                            {Array.from({ length: activeData.startDay }).map((_, i) => (
+                                <div key={`empty-${i}`} className="border-r border-b border-slate-200 bg-slate-50"></div>
+                            ))}
+
+                            {Array.from({ length: activeData.daysInMonth }).map((_, i) => {
+                                const dayNum = i + 1;
+                                const data = activeData.events[dayNum];
+                                const isWeekend = (activeData.startDay + i) % 7 === 0 || (activeData.startDay + i) % 7 === 6;
+                                let opacity = filter === 'pastoral' && !data?.pastoral ? "opacity-20" : "opacity-100";
+
+                                return (
+                                    <div key={dayNum} className={`border-r border-b border-slate-900 flex flex-col transition-all relative ${opacity}`} style={getEventStyle(data)}>
+                                        <div className={`font-bold text-base p-2 ${isWeekend ? 'text-slate-400' : 'text-slate-800'}`}>{dayNum}</div>
+                                        
+                                        <div className="flex-1 flex flex-col px-2 pb-2 gap-1 overflow-hidden">
+                                            {data?.type && <div className="text-[10px] font-black uppercase text-center leading-tight">{data.event}</div>}
+                                            
+                                            {!isWeekend && data?.profe && (
+                                                <div className="flex flex-col gap-1">
+                                                    <div className="text-[9px] leading-none">
+                                                        <span className="font-bold text-slate-400 uppercase text-[8px] block">Resp:</span>
+                                                        <span className="font-bold text-blue-800">{isTemplateMode ? '________' : data.profe}</span>
+                                                    </div>
+                                                    
+                                                    <button 
+                                                        onClick={() => !isTemplateMode && data.tema !== 'Propuesta del día...' && setSelectedProposal({ day: dayNum, ...data })}
+                                                        className={`text-left bg-white/60 p-1.5 rounded border border-slate-900/10 min-h-[45px] hover:bg-white/90 transition-colors group ${isTemplateMode ? 'cursor-default' : 'cursor-pointer'}`}
+                                                    >
+                                                        <span className="font-bold text-slate-400 uppercase text-[8px] block">Propuesta:</span>
+                                                        <p className="text-[9px] leading-tight text-slate-700 italic line-clamp-3">
+                                                            {isTemplateMode ? '' : (data.tema === 'Propuesta del día...' ? 'Pendiente' : data.pastoral || 'Ver propuesta...')}
+                                                        </p>
+                                                        {!isTemplateMode && data.tema !== 'Propuesta del día...' && (
+                                                            <span className="text-[8px] text-blue-600 font-bold mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Click para abrir →</span>
+                                                        )}
+                                                    </button>
+                                                </div>
+                                            )}
+
+                                            {data?.pastoral && !data?.profe && (
+                                                <div className="mt-auto pt-1 border-t border-blue-900/10 text-center">
+                                                    <div className="inline-flex items-center gap-1 text-[8px] font-black text-blue-900 uppercase">
+                                                        <CalendarIcon size={8} /> {data.pastoral}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
-                </div>
 
-                {/* Días de la semana */}
-                <div className="grid grid-cols-7 border-b-2 border-slate-900" style={{ backgroundColor: COLORS.rojoLadrillo }}>
-                    {DAYS_OF_WEEK.map((day) => (
-                        <div key={day} className="py-2 text-center text-xs font-bold border-r border-slate-900 last:border-r-0 text-white tracking-widest">
-                            {day}
-                        </div>
-                    ))}
-                </div>
-
-                {/* Grilla de Días */}
-                <div className="grid grid-cols-7" style={{ gridAutoRows: 'minmax(130px, auto)' }}>
-                    {/* Espacios vacíos inicio mes */}
-                    {Array.from({ length: activeData.startDay }).map((_, i) => (
-                        <div key={`empty-${i}`} className="border-r border-b border-slate-200 bg-slate-50"></div>
-                    ))}
-
-                    {/* Días del mes */}
-                    {Array.from({ length: activeData.daysInMonth }).map((_, i) => {
-                        const dayNum = i + 1;
-                        const data = activeData.events[dayNum];
-                        const isWeekend = (activeData.startDay + i) % 7 === 0 || (activeData.startDay + i) % 7 === 6;
-
-                        // Lógica de filtrado
-                        let opacity = "opacity-100";
-                        if (filter === 'equipo' && (!data?.profe || data.type)) opacity = "opacity-20";
-                        if (filter === 'pastoral' && !data?.pastoral) opacity = "opacity-20";
-
-                        return (
-                            <div
-                                key={dayNum}
-                                className={`border-r border-b border-slate-900 flex flex-col transition-all relative ${opacity}`}
-                                style={getEventStyle(data)}
-                            >
-                                <div className={`font-bold text-base p-2 ${isWeekend ? 'text-slate-400' : 'text-slate-800'}`}>
-                                    {dayNum}
+                    {/* --- Modal de Propuesta (Despliegue) --- */}
+                    {selectedProposal && (
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm print:hidden">
+                            <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border-2 border-slate-900 overflow-hidden">
+                                <div className="flex items-center justify-between p-4 border-b-2 border-slate-900" style={{ backgroundColor: COLORS.azulInst }}>
+                                    <div className="flex items-center gap-3 text-white">
+                                        <BookOpen size={24} />
+                                        <div>
+                                            <h3 className="font-bold text-lg leading-none uppercase tracking-tight">Propuesta de Oración</h3>
+                                            <p className="text-xs opacity-80 mt-1 font-medium">{selectedProposal.day} de {currentMonth.split(' ')[0]} - {selectedProposal.profe}</p>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => setSelectedProposal(null)} className="p-2 hover:bg-white/10 rounded-full text-white transition-colors">
+                                        <X size={24} />
+                                    </button>
+                                </div>
+                                
+                                <div className="p-6 max-h-[70vh] overflow-y-auto bg-slate-50">
+                                    {selectedProposal.pastoral && (
+                                        <div className="mb-4 inline-flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-900 rounded-full text-xs font-black uppercase">
+                                            <CalendarIcon size={12} /> {selectedProposal.pastoral}
+                                        </div>
+                                    )}
+                                    
+                                    <div className="prose prose-slate max-w-none">
+                                        {selectedProposal.tema.split('\n\n').map((para, idx) => (
+                                            <p key={idx} className={`text-slate-700 leading-relaxed mb-4 text-sm ${para.includes('“') || para.includes('«') || para.includes('Cita:') ? 'italic font-medium bg-white p-4 border-l-4 border-amber-400 rounded-r-lg shadow-sm' : ''} ${para.includes('Pregunta/Acción:') || para.includes('Amén') ? 'font-bold text-blue-900 flex items-center gap-2' : ''}`}>
+                                                {(para.includes('Pregunta/Acción:') || para.includes('Amén')) && <PrayingHandsIcon size={18} className="text-amber-500 shrink-0" />}
+                                                {para}
+                                            </p>
+                                        ))}
+                                    </div>
                                 </div>
 
-                                <div className="flex-1 flex flex-col px-2 pb-2 gap-1 overflow-hidden">
-                                    {data?.type && (
-                                        <div className="text-[10px] font-black uppercase text-center leading-tight">
-                                            {data.event}
-                                        </div>
-                                    )}
-
-                                    {!isWeekend && data?.profe && (
-                                        <div className="flex flex-col gap-1">
-                                            <div className="text-[10px] leading-none">
-                                                <span className="font-bold text-slate-400 uppercase text-[8px] block">Responsable:</span>
-                                                <span className="font-bold text-blue-800">
-                                                    {isTemplateMode ? '________________' : data.profe}
-                                                </span>
-                                            </div>
-
-                                            <div className="bg-white/60 p-1.5 rounded border border-slate-900/10 min-h-[50px] flex flex-col justify-center">
-                                                <span className="font-bold text-slate-400 uppercase text-[8px] block">Propuesta:</span>
-                                                <p className="text-[10px] leading-tight text-slate-700 italic">
-                                                    {isTemplateMode ? '' : data.tema}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {data?.pastoral && (
-                                        <div className="mt-auto pt-1 border-t border-blue-900/20 text-center">
-                                            <div className="inline-flex items-center gap-1 text-[9px] font-black text-blue-900 uppercase">
-                                                <CalendarIcon size={10} />
-                                                {data.pastoral}
-                                            </div>
-                                        </div>
-                                    )}
+                                <div className="p-4 border-t border-slate-200 bg-white flex justify-end">
+                                    <button onClick={() => setSelectedProposal(null)} className="px-6 py-2 bg-slate-900 text-white rounded-lg font-bold text-sm hover:bg-slate-800 transition-all">
+                                        Cerrar
+                                    </button>
                                 </div>
                             </div>
-                        );
-                    })}
-                </div>
-            </div>
+                        </div>
+                    )}
 
-            {/* Pie de página para impresión */}
-            <div className="mt-4 hidden print:flex justify-between items-end text-[10px] text-slate-400 px-2 font-medium">
-                <div>Generado para el Equipo Pastoral.</div>
-                <div>"Donde dos o tres se reúnen en mi nombre..."</div>
-                <div>Página 1 de 1</div>
-            </div>
-        </div>
-    );
-}
+                    {/* Pie de página para impresión */}
+                    <div className="mt-4 hidden print:flex justify-between items-end text-[10px] text-slate-400 px-2 font-medium">
+                        <div>Generado para el Equipo Pastoral San José.</div>
+                        <div>{LEMA_COMUN}</div>
+                        <div>2026</div>
+                    </div>
+                </div>
+            );
+        }
 
         const root = createRoot(document.getElementById('root'));
         root.render(<App />);
